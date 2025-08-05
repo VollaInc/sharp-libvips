@@ -183,6 +183,23 @@ AOM_AS_FLAGS="${FLAGS}" cmake -G"Unix Makefiles" \
   ..
 make install/strip
 
+mkdir ${DEPS}/libde265
+$CURL https://github.com/strukturag/libde265/releases/download/v${VERSION_LIBDE265}/libde265-${VERSION_LIBDE265}.tar.gz | tar xzC ${DEPS}/libde265 --strip-components=1
+cd ${DEPS}/libde265
+cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=FALSE -DENABLE_SDL=0 -DENABLE_DECODER=1 -DENABLE_ENCODER=0
+make install/strip
+
+mkdir ${DEPS}/x265
+$CURL https://bitbucket.org/multicoreware/x265_git/downloads/x265_${VERSION_X265}.tar.gz | tar xzC ${DEPS}/x265 --strip-components=1
+cd ${DEPS}/x265/source
+cmake -G"Unix Makefiles" \
+  -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=FALSE -DENABLE_CLI=0 -DENABLE_SHARED=0 -DEXPORT_C_API=1 -DENABLE_ASSEMBLY=1 \
+  ${WITHOUT_NEON:+-DENABLE_ASSEMBLY=0}
+make install/strip
+
 mkdir ${DEPS}/heif
 $CURL https://github.com/strukturag/libheif/releases/download/v${VERSION_HEIF}/libheif-${VERSION_HEIF}.tar.gz | tar xzC ${DEPS}/heif --strip-components=1
 cd ${DEPS}/heif
@@ -190,7 +207,7 @@ cd ${DEPS}/heif
 sed -i'.bak' "/^cmake_minimum_required/s/3.16.3/3.12/" CMakeLists.txt
 CFLAGS="${CFLAGS} -O3" CXXFLAGS="${CXXFLAGS} -O3" cmake -G"Unix Makefiles" \
   -DCMAKE_TOOLCHAIN_FILE=${ROOT}/Toolchain.cmake -DCMAKE_INSTALL_PREFIX=${TARGET} -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_SHARED_LIBS=FALSE -DBUILD_TESTING=0 -DENABLE_PLUGIN_LOADING=0 -DWITH_EXAMPLES=0 -DWITH_LIBDE265=0 -DWITH_X265=0
+  -DBUILD_SHARED_LIBS=FALSE -DBUILD_TESTING=0 -DENABLE_PLUGIN_LOADING=0 -DWITH_EXAMPLES=0 -DWITH_LIBDE265=1 -DWITH_X265=1
 make install/strip
 
 mkdir ${DEPS}/jpeg
@@ -463,6 +480,7 @@ printf "{\n\
   \"highway\": \"${VERSION_HWY}\",\n\
   \"imagequant\": \"${VERSION_IMAGEQUANT}\",\n\
   \"lcms\": \"${VERSION_LCMS}\",\n\
+  \"libde265\": \"${VERSION_LIBDE265}\",\n\
   \"mozjpeg\": \"${VERSION_MOZJPEG}\",\n\
   \"pango\": \"${VERSION_PANGO}\",\n\
   \"pixman\": \"${VERSION_PIXMAN}\",\n\
@@ -473,6 +491,7 @@ printf "{\n\
   \"tiff\": \"${VERSION_TIFF}\",\n\
   \"vips\": \"${VERSION_VIPS}\",\n\
   \"webp\": \"${VERSION_WEBP}\",\n\
+  \"x265\": \"${VERSION_X265}\",\n\
   \"xml2\": \"${VERSION_XML2}\",\n\
   \"zlib-ng\": \"${VERSION_ZLIB_NG}\"\n\
 }" >versions.json
